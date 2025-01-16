@@ -9,86 +9,69 @@ api_key = os.getenv("API_KEY")
 
 client = OpenAI(api_key=api_key)
 
-def chunk_text(text, chunk_size=2000):
-    """
-    Split text into manageable chunks based on chunk_size to avoid token limits.
-    """
-    chunks = [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
-    return chunks
 
 def summarize_text(text_chunk):
     """
     Summarize the chunk of text using OpenAI's chat-based API.
     """
     response = client.chat.completions.create(
-        model = "gpt-3.5-turbo",
-        messages = [
-            {"role": "system", "content": "You are a helpful school teacher."},
-            {"role": "user", "content": f"Explain this in great detail: {text_chunk}"}
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful school teacher. Explain everything as if the user is an amateur"},
+            {"role": "user", "content": f"Explain this in great detail by breaking down each jargon into their meanings: {text_chunk}"}
         ]
     )
     return response.choices[0].message.content
 
-def summarize_pdf(pdf_path):
+
+def summarize_pdf_page(page_text):
+    """
+    Summarize a single page of text.
+    """
+    return summarize_text(page_text)
+
+
+def load_pdf_pages(pdf_path):
+    """
+    Load all pages from a PDF and return a list of text from each page.
+    """
     pdf_file = open(pdf_path, "rb")
     pdf_reader = PyPDF2.PdfReader(pdf_file)
 
-    full_text = ""
-    for page_num in range(len(pdf_reader.pages)):
-        page_text = pdf_reader.pages[page_num].extract_text()
-        full_text += page_text
+    pages = [pdf_reader.pages[i].extract_text() for i in range(len(pdf_reader.pages))]
+    pdf_file.close()
+    return pages
 
-    chunks = chunk_text(full_text)
-
-    summaries = []
-    for chunk in chunks:
-        summary = summarize_text(chunk)
-        summaries.append(summary)
-    return summaries
-
-
-def ask_question(context, question):
-    """
-    Allow the user to ask questions based on the context (PDF summary).
-    """
-
-    conversation_history = [
-        {
-            "role": "system",
-            "content":
-            """
-                You are a helpful school teacher. 
-                Answer as if you are explaining it to a 15 year old but only based on the provided content of the PDF.
-                Do not include any outside knowledge. If the question is outside the PDF's context, inform the user that you cannot answer.
-            """
-            # Do not include any outside knowledge. If the question is outside the PDF's context, inform the user that you cannot answer.
-        }
-    ]
-    for summary in context:
-        conversation_history.append({"role": "assistant", "content": summary})
-
-    conversation_history.append({"role": "user", "content": question})
-
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=conversation_history
-    )
-
-    return response.choices[0].message.content
 
 def main(pdf_path):
-    summaries = summarize_pdf(pdf_path)
+    pages = load_pdf_pages(pdf_path)
+    page_index = 0
 
-    # full_summary = "\n".join(summaries)
-    # print("Summary of PDF:\n", full_summary)
+    while page_index < len(pages):
 
-    while True:
-        user_question = input("\nAsk a question about the PDF (or type 'exit' to quit): ")
-        if user_question.lower() == "exit":
+        if page_index == 0:
+            print(f"\nExplaining page {page_index}:\n")
+            page_summary = summarize_pdf_page(pages[page_index])
+            print(page_summary)
+            page_index += 1
+
+        user_input = input("\nType 'next' to explain the next page or 'exit' to quit: ").lower()
+
+        if user_input == 'exit':
+            print("Exiting program.")
             break
 
-        answer = ask_question(summaries, user_question)
-        print("\nAnswer:", answer)
+        if user_input == 'next':
+            print(f"\nExplaining page {page_index}:\n")
+            page_summary = summarize_pdf_page(pages[page_index])
+            print(page_summary)
+            page_index += 1
+
+        else:
+            print("Invalid input. Please type 'next' or 'exit'.")
+
+    if page_index >= len(pages):
+        print("\nYou have reached the end of the document.")
 
 
 # Run the program

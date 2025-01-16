@@ -1,0 +1,11 @@
+PyPDF2
+transformers
+pymupdf
+sentencepiece
+protobuf
+python-dotenv
+openai
+fastapi
+uvicorn
+python-multipart
+pydantic

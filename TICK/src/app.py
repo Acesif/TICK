@@ -1,5 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from dto.SummarizeRequest import SummarizeRequest
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 import PyPDF2
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -65,15 +64,12 @@ async def upload_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @app.post("/summarize")
-async def summarize_page(request: SummarizeRequest):
+async def summarize_page(pdf_id: str = Form(...), page_number: int = Form(...)):
     """
     Endpoint to summarize a specific page of a stored PDF.
+    Accepts pdf_id and page_number as form data.
     """
     try:
-        # Extract details from the request body
-        pdf_id = request.pdf_id
-        page_number = request.page_number
-
         # Check if the PDF exists in storage
         if pdf_id not in pdf_storage:
             raise HTTPException(status_code=404, detail="PDF not found. Please upload the PDF first.")
@@ -93,4 +89,3 @@ async def summarize_page(request: SummarizeRequest):
         return {"pdf_id": pdf_id, "page_number": page_number, "summary": summary}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-

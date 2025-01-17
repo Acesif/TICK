@@ -32,7 +32,10 @@ async def upload_pdf(file: UploadFile = File(...)):
         pdf_id = file.filename
         pdf_storage[pdf_id] = pdf_pages
 
-        return {"message": "PDF uploaded successfully", "pdf_id": pdf_id, "total_pages": len(pdf_pages)}
+        return {
+            "pdf_id": pdf_id,
+            "total_pages": len(pdf_pages)
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
@@ -60,5 +63,7 @@ async def summarize_page(pdf_id: str = Form(...), page_number: int = Form(...)):
 todo: 
 
 1. ask the user questions based on the summary provided
+2. give points or marks based on the number of questions gotten correct
+3. return the points
 
 """

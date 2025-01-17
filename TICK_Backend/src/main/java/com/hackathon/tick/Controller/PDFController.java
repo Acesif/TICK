@@ -1,6 +1,8 @@
 package com.hackathon.tick.Controller;
 
 import com.hackathon.tick.DTO.Response;
+import com.hackathon.tick.DTO.ResponseFromPy.SummarizePage;
+import com.hackathon.tick.DTO.ResponseFromPy.UploadPDF;
 import com.hackathon.tick.Gateway.PDFService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -25,11 +27,29 @@ public class PDFController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public Response uploadPDF(@RequestParam(name = "file") MultipartFile file) {
 
-        var result = pdfService.uploadPDF(file);
+        UploadPDF result = pdfService.uploadPDF(file);
 
         return Response.builder()
                 .status("success")
                 .message("File uploaded successfully")
+                .data(result)
+                .build();
+    }
+
+    @RequestMapping(value = "/summarize",
+            method = RequestMethod.POST,
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public Response summarizePDF(
+            @RequestParam(name = "pdf_id") String pdf_id,
+            @RequestParam(name = "page_number") Integer page_number
+    ) {
+
+        SummarizePage result = pdfService.summarizePage(pdf_id, page_number);
+
+        return Response.builder()
+                .status("success")
+                .message("Page summarized successfully")
                 .data(result)
                 .build();
     }
